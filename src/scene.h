@@ -8,6 +8,9 @@
 #include "light.h"
 #include "shader.h"
 #include "frame.h"
+#include "particlesystem/particle.h"
+#include "particlesystem/particlegenerator.h"
+#include "particlesystem/particlesource.h"
 
 #include <glm/glm.hpp>
 
@@ -26,19 +29,12 @@ class Scene
   public:
     Scene(int frame_width, int frame_height)
     {
-        // Scene config.
-        // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-        stbi_set_flip_vertically_on_load(true);
-        // configure global opengl state
-        // -----------------------------
-        glEnable(GL_DEPTH_TEST);
-        cout<< "SCENE::CONSTRUCTOR::SCENE_CONFIG::DONE" << endl;
-
         // Mesh
-        MeshLoader mesh_loader("./../sandbox/data/geometry/box.obj");
+        MeshLoader mesh_loader("./../sandbox/data/geometry/ground.obj");
         cout<< "SCENE::CONSTRUCTOR::MESH_LOADING::DONE" << endl;
 
         // Texture
+        stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis (before loading model)
         TextureLoader texture_loader;
         texture_loader.load("./../sandbox/data/texture/texture.png", DIFFUSE, "albedoMap"); // TODO: name must be same as in fs
         cout<< "SCENE::CONSTRUCTOR::TEXTURE_LOADING::DONE" << endl;
@@ -49,7 +45,7 @@ class Scene
 
         // Light
         std::vector<PointLight> point_lights;
-        PointLight point_light(glm::vec3(3.0, 3.0, 3.0), glm::vec3(1.0, 1.0, 1.0));
+        PointLight point_light(glm::vec3(3.0, 3.0, 10.0), glm::vec3(1.0, 1.0, 1.0));
         point_lights.push_back(point_light);
         cout<< "SCENE::CONSTRUCTOR::POINT_LIGHT_CONSTRUCTING::DONE" << endl;
 
@@ -68,6 +64,10 @@ class Scene
         frame = Frame(frame_width, frame_height);
         cout<< "SCENE::CONSTRUCTOR::FRAME_CONSTRUCTING::DONE" << endl;
 
+        // Particle system.
+        ParticleSource particle_source(glm::vec3(4.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        this->particle_system = ParticleGenerator(100, particle_source);
+
         // Scene meta.
         scene_name = "Scene 1";
         cout<< "SCENE::CONSTRUCTOR::DONE" << endl;
@@ -75,10 +75,12 @@ class Scene
 
     void before_render()
     {
-        // pass.
+        // configure global opengl state
+        // -----------------------------
+        glEnable(GL_DEPTH_TEST);
     }
 
-    void before_frame()
+    void before_frame(float dt)
     {
         Camera camera = get_active_camera();
         glm::mat4 view = camera.GetViewMatrix();
@@ -123,8 +125,12 @@ class Scene
                 glActiveTexture(GL_TEXTURE0); // set back to default
             }
         }
+        // Particles.
+        this->particle_system.before_frame(dt, 2, glm::vec3(2.0f, 3.0f, 3.0f));
+        this->particle_system.render(view, projection, model);
     }
 
+    ParticleGenerator particle_system;
     vector<Assembly> assemblies;
     vector<Camera> cameras; 
     std::string active_camera;
@@ -151,5 +157,6 @@ class Scene
                 return &cameras[camera_i];
             }
         }
+        return NULL;
     }
 };

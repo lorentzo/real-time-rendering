@@ -53,7 +53,6 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // mouse
     cout<< "RENDERER::MAIN::GLFW_WINDOW::DONE" << endl;
-    
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -96,7 +95,7 @@ int main()
 
         // Set up per-frame rendering parameters
         // -------------------------------------
-        scene.before_frame();
+        scene.before_frame(deltaTime);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
